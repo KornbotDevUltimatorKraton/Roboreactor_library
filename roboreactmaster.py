@@ -1,3 +1,7 @@
+
+#Author: Chanapai Chuadchum 
+#Project: Roboreactor code generator 
+#Date of development: 2022-05-27 13:55:43.077220
 from imaplib import Internaldate2tuple
 import threading
 import requests # Getting the micro controller data  
@@ -37,8 +41,16 @@ from geopy.geocoders import Nominatim # Getting the geo positioning data
 import psycopg2 #Data base library 
 import configparser # getting the configure part to write the configuretion mode of code 
 import datetime # internal clock datetime 
+
+try:     
+   print("Give the permission to local uart")
+   os.system("sudo chmod -R 777 /dev/ttyAMA0")
+   os.system("sudo chmod -R 777 /dev/ttyS0")
+except: 
+    pass 
+
 #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-                                               #These function only able to enable from the singleboard computer 
+user = getpass.getuser()                                               #These function only able to enable from the singleboard computer 
 
 #Support python version 3.7+ 3.8+ 
 #Rpi fully support on the debian OS
@@ -375,7 +387,6 @@ class Action_control(object):
            def I2C_servo_motor(self,name_servo,angle,pins):
 
                 try:  
-                   
                     exec(str(name_servo)+"_servo = "+"servo.Servo(pca.channels["+str(pins)+"])") # Getting the pins number of the servo 
                     exec(str(name_servo)+"_servo.angle = "+str(angle)) # Getting the angle of the servo to activate the function of the motion system
                 except:
@@ -477,8 +488,28 @@ class Visual_Cam_optic(object):  # Calling the camera and optic devices input fo
                   # Start the loop of frame rate read
                   exec("for r_"+str(cam_num)+" in count(0):"+"\n\t\tpacket_"+str(cam_num)+",_"+str(cam_num)+" = client_socket_"+str(cam_num)+".recvfrom(BUFF_SIZE_"+str(cam_num)+")"+"\n\t\tdata_"+str(cam_num)+" = base64.b64decode(packet_"+str(cam_num)+",' /')"+"\n\t\tnpdata_"+str(cam_num)+" = np.fromstring(data_"+str(cam_num)+",dtype=np.uint8)"+"\n\t\tframe_"+str(cam_num)+" = cv2.imdecode(npdata_"+str(cam_num)+",1)"+"\n\t\tprint(frame_"+str(cam_num)+")") 
 
-           def Camera_Face_recognition(self,cam_num,Buffers,portdata,port_message,ip_number):
- 
+           def Camera_Face_recognition(self,path_data,title_name,cam_num,Buffers,portdata,ip_number):
+                  
+                  path = '/home/'+str(user)+"/"+str(path_data)  #Getting the file from directoty 
+                  try:
+                        os.mkdir(path,mode=0o777) # Getting the directory create with the path
+                  except:
+                         pass 
+                  recognized_data = os.listdir(path) # Getting path of the face data inside the list
+                  for r in recognized_data:
+                     people = r.split(".")[0]
+                     exec(str(people)+"_image = face_recognition.load_image_file('"+str(people)+".jpg'"+")")
+                     exec("global"+" "+str(people)+"_face_encoding;"+str(people)+"_face_encoding = face_recognition.face_encodings("+str(people)+"_image)[0]")  
+                  known_face_encodings = []
+                  for t in recognized_data: 
+                          exec("known_face_encodings.append("+str(t.split(".")[0])+"_face_encoding"+")")   
+                  known_face_names = []
+                  for y in recognized_data: 
+                          exec("known_face_names.append("+"'"+str(y.split(".")[0])+"'"+")")
+                  exec("face_locations = []")
+                  exec("face_encodings = []")
+                  exec("face_names = []")
+                  exec("process_this_frame = True")
                   exec("BUFF_SIZE_"+str(cam_num)+" = "+str(Buffers))
                   exec("client_socket_"+str(cam_num)+" = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)")
                   exec("client_socket_"+str(cam_num)+".setsockopt(socket.SOL_SOCKET,socket.SO_RCVBUF,BUFF_SIZE_"+str(cam_num)+")")
@@ -490,8 +521,7 @@ class Visual_Cam_optic(object):  # Calling the camera and optic devices input fo
                   exec("client_socket_"+str(cam_num)+".sendto(message_"+str(cam_num)+",(host_ip_"+str(cam_num)+","+"port_"+str(cam_num)+"))")
                   exec("fps_"+str(cam_num)+",st_"+str(cam_num)+",frames_to_count_"+str(cam_num)+",cnt_"+str(cam_num)+" = (0,0,20,0)")
                   # Start the loop of frame rate read
-                  exec("for r_"+str(cam_num)+" in count(0):"+"\n\t\tpacket_"+str(cam_num)+",_"+str(cam_num)+" = client_socket_"+str(cam_num)+".recvfrom(BUFF_SIZE_"+str(cam_num)+")"+"\n\t\tdata_"+str(cam_num)+" = base64.b64decode(packet_"+str(cam_num)+",' /')"+"\n\t\tnpdata_"+str(cam_num)+" = np.fromstring(data_"+str(cam_num)+",dtype=np.uint8)"+"\n\t\tframe_"+str(cam_num)+" = cv2.imdecode(npdata_"+str(cam_num)+",1)"+"\n\t\tprint(frame_"+str(cam_num)+")") 
-
+                  exec("for r_"+str(cam_num)+" in count(0):"+"\n\t\tpacket_"+str(cam_num)+",_"+str(cam_num)+" = client_socket_"+str(cam_num)+".recvfrom(BUFF_SIZE_"+str(cam_num)+")"+"\n\t\tdata_"+str(cam_num)+" = base64.b64decode(packet_"+str(cam_num)+",' /')"+"\n\t\tnpdata_"+str(cam_num)+" = np.fromstring(data_"+str(cam_num)+",dtype=np.uint8)"+"\n\t\tframe_"+str(cam_num)+" = cv2.imdecode(npdata_"+str(cam_num)+",1)"+"\n\t\tprint(frame_"+str(cam_num)+")"+"\n\t\tsmall_frame_"+str(cam_num)+" = cv2.resize(frame_"+str(cam_num)+", (0, 0), fx=0.25, fy=0.25)"+"\n\t\trgb_small_frame_"+str(cam_num)+" = small_frame_"+str(cam_num)+"[:, :, ::-1]"+"\n\t\tif process_this_frame:"+"\n\t\t\tface_locations_"+str(cam_num)+" = face_recognition.face_locations(rgb_small_frame_"+str(cam_num)+")"+"\n\t\t\tface_encodings_"+str(cam_num)+" = face_recognition.face_encodings(rgb_small_frame_"+str(cam_num)+", face_locations_"+str(cam_num)+")"+"\n\t\t\tface_names = []"+"\n\t\t\tfor face_encoding in face_encodings_"+str(cam_num)+":"+"\n\t\t\t\tmatches_"+str(cam_num)+" = face_recognition.compare_faces(known_face_encodings, face_encoding)"+"\n\t\t\t\tname = 'Unknown'"+"\n\t\t\t\tface_distances_"+str(cam_num)+" = face_recognition.face_distance(known_face_encodings, face_encoding)"+"\n\t\t\t\tbest_match_index_"+str(cam_num)+" = np.argmin(face_distances_"+str(cam_num)+")"+"\n\t\t\t\tif matches_"+str(cam_num)+"[best_match_index_"+str(cam_num)+"]:"+"\n\t\t\t\t\tname = known_face_names[best_match_index_"+str(cam_num)+"]"+"\n\t\t\t\tface_names.append(name)"+"\n\t\t\t\tprint(frame_"+str(cam_num)+")"+"\n\t\tprocess_this_frame = not process_this_frame"+"\n\t\tfor (top, right, bottom, left), name in zip(face_locations_"+str(cam_num)+", face_names):"+"\n\t\t\ttop *=4"+"\n\t\t\tright *=4"+"\n\t\t\tbottom *=4"+"\n\t\t\tleft *=4"+"\n\t\t\tcv2.rectangle(frame_"+str(cam_num)+", (left, top), (right, bottom), (0, 0, 255), 2)"+"\n\t\t\tcv2.rectangle(frame_"+str(cam_num)+", (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)"+"\n\t\t\tfont = cv2.FONT_HERSHEY_DUPLEX"+"\n\t\t\tcv2.putText(frame_"+str(cam_num)+", name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)"+"\n\t\tcv2.imshow('"+str(title_name)+"', frame_"+str(cam_num)+")"+"\n\t\tif cv2.waitKey(1) & 0xFF == ord('q'):"+"\n\t\t\tbreak") 
            def Camera_Visual_to_text(self,cam_num,Buffers,portdata,port_message,ip_number): 
                   exec("BUFF_SIZE_"+str(cam_num)+" = "+str(Buffers))
                   exec("client_socket_"+str(cam_num)+" = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)")
@@ -612,15 +642,47 @@ class Kinematic_controlposition(object):
                    pass  
             def Catesian_robot(self):
                    pass
-            def pan_tilt(self):
-                   pass 
+            def pan_tilt(self,x,y,z):  # Calculate the angle of pivot joint 
+                   d = math.sqrt(math.pow(x,2)+math.pow(y,2)) 
+                   angle_theta = math.degrees(math.atan(z/d)) # turning radians to degrees 
+                   return angle_theta # Getting the angle theta output 
 class Cellular_networking_com(object): # Getting the location outdoor from the cellular module in lattitude and longitude in realtime 
-           def Call_out(self,serialdev,command_input):
-                
-                pass               
-           def Location_cellular_network(self):
-
-                pass 
+           def raw_command_input(self,sim800l,command_input,ip,port):
+                #sim800l = serial.Serial('/dev/ttyS0',115200) # input the AT command into the right specific port data 
+                print("GPRS module found................[OK]")
+                sim800l.write('AT\n;'.encode('UTF-8'))
+                #sim800l.write('ATD+ +66970762483\n;'.encode('UTF-8')) #
+                Getresponse = sim800l.readline().decode('UTF-8')
+                print("GPRS command.........",Getresponse)
+                Getresponse_status = sim800l.readline().decode('UTF-8')
+                print("GPRS status.........",Getresponse_status)      
+                sim800l.write(str(command_input).encode('UTF-8')) # Getting the sim800l command to send to the module call                
+                command_ = sim800l.readline().decode('UTF-8')
+                display_output = command_
+                print(display_output) #Getting the output  
+                gprs_message = {'GPRS_message':display_output} # Getting the gprs message output from the ommand 
+                gprs_mod = Internal_Publish_subscriber()
+                gprs_mod.Publisher_dict(ip,gprs_message,port)
+           def Location_cellular_network(self,sim800l,ip,port):
+                sim800l.write('AT +SAPBR = 3,1,"CONTYPE","GPRS"\n;'.encode('UTF-8'))
+                sim800l.write('AT +SAPBR = 3,1,"APN","RCMNET"\n;'.encode('UTF-8'))
+                sim800l.write('AT +SAPBR = 1,1\n;'.encode('UTF-8'))
+                sim800l.write('AT +SAPBR= 1,1\n;'.encode('UTF-8'))
+                sim800l.write('AT +SAPBR= 2,1\n;'.encode('UTF-8'))
+                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8'))
+                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8'))
+                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8'))
+                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8'))
+                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8'))
+                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8'))
+                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8')) 
+                if sim800l.readline().decode('UTF-8').split(" ")[0] == "+CIPGSMLOC:":
+                       loc = sim800l.readline().decode('UTF-8').split(" ")[1]
+                       print("Long,Lat:",loc) # getting the location from the tuple of data 
+                       loc_message = {"GPRS_Location_message":loc} 
+                       location_message = Internal_Publish_subscriber()
+                       location_message.Publisher_dict(ip,loc_message,port)
+              
               
 class Navigation_sensors(object): 
            def Lidar_nav(self):
@@ -655,7 +717,7 @@ class Navigation_sensors(object):
                   
            def camera_slam_nav(self):
 
-                 pass  
+                    pass  
           
            def rssi_distance_converter(self,ip,port): #Getting the ip and port to publish the rssi value 
                 for r in count(0):     
@@ -764,7 +826,12 @@ def Create_node_sub(t,addresses,buffer,initial_port):
            exec("sub_"+str(t)+" = Internal_Publish_subscriber()")  
            exec("global data_return;data_return"+" = sub_"+str(t)+".Subscriber_dict('"+str(address)+"',"+str(buffer)+","+str(port)+")")
            return  data_return 
-           
+def Face_recognition(path_data,title_name,cam_num,Buffers,portdata,ip_number):
+
+        face_rec = Visual_Cam_optic()
+        face_rec.Camera_Face_recognition(path_data,title_name,cam_num,Buffers,portdata,ip_number)
+
+
 def Speech_recognition(initial_lang,destination_lang,address,port):
            speech_recog = Audio_function() 
            speech_recog.Speech_recognition(initial_lang,destination_lang,address,port)
@@ -844,6 +911,13 @@ def rssi_indoor(ip,port):
 def GPS_navigation(gpsname,serialdev,baudrate,ip,port): 
            gps_nav = Navigation_sensors() 
            gps_nav.GPS_module_nav(gpsname,serialdev,baudrate,ip,port) 
+def GPRS_communication_system(sim800l,command_input,ip,port):
+          GPRS_mod = Cellular_networking_com() 
+          GPRS_mod.raw_command_input(sim800l,command_input,ip,port)
+def Location_cellular_network(sim800l,ip,port):
+          GPRS_loc = Cellular_networking_com()
+          GPRS_loc.Location_cellular_network(sim800l,ip,port)
+
 def mcu1():
    mcu_data = "STM32F103CBTx"
    mcu_list =  microcontroller_info_dat(mcu_data)
