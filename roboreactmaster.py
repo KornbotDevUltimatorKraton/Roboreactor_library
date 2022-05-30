@@ -332,40 +332,38 @@ class Action_control(object):
                    
                   pass
            #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-           def Serial_mcu_connect(self,component_name,number,Serialdev):
-                 print("Serial connected!",component_name) 
-                 exec(str(component_name)+"_"+str(number)+" = pyfirmata.ArduinoMega('"+str(Serialdev)+"')") #Choosing the data selection from the sequence conditioning  
+           
 
            #Serial GPIO 
-           def Serial_DC_motordriver(self,node_type,component_name,Serialdev,mcu_number,number,pin_number,motor_name,speed,signal_type,gpiol,gpior): # Getting the motor name and the speed of the motor 
+           def Serial_MCU(self,mcu_number,number,pin_number,motor_name): # Getting the motor name and the speed of the motor 
                   # Convertting this into the execution 
                   # using the pins mapping from the stm32F103C8T6 
               if mcu_number == "STM32F103C8TX": # Getting the microcontroller series
                   print("Selected mcu: ",mcu_number) 
-                  #hardware = pyfirmata.ArduinoMega(serialdev) # Getting the serial dev input here for example /dev/ttyACM0 , /dev/ttyUSB0 
-                  if node_type == "main_node":
-                        print("devices_data",node_type,component_name,Serialdev,mcu_number,number,pin_number,motor_name,speed,signal_type,gpiol,gpior)
-                        exec(str(component_name)+"_"+str(number)+" = pyfirmata.ArduinoMega('"+str(Serialdev)+"')") #Choosing the data selection from the sequence conditioning  
+                  #hardware = pyfirmata.ArduinoMega(serialdev) # Getting the serial dev input here for example /dev/ttyACM0 , /dev/ttyUSB0
                   #exec("motordat"+str(number)+" = str(component_name)"+"_"+str(number)+".get_pin('d:"+str(2)+":"+str('p'))
-                  exec("motorl_"+str(number) +" = "+str(motor_name)+".get_pin('d:"+str(pin_number[0])+":"+str(signal_type)+"')")
-                  exec("motorr_"+str(number) +" = "+str(motor_name)+".get_pin('d:"+str(pin_number[1])+":"+str(signal_type)+"')")
-                  exec("if gpiol"+" == 1 and gpior"+"== 0:"+"\n\t"+"motorl_"+str(number)+".write("+str(speed)+")"+"\n\t"+"motorr_"+str(number)+".write(0)") 
-                  exec("if gpiol"+" == 0 and gpior"+"== 1:"+"\n\t"+"motorl_"+str(number)+".write(0)"+"\n\t"+"motorr_"+str(number)+".write("+str(speed)+")") 
-                  exec("if gpiol"+" == 0 and gpior"+"== 0:"+"\n\t"+"motorl_"+str(number)+".write(0)"+"\n\t"+"motorr_"+str(number)+".write(0)") 
+                  exec("global motorl_"+str(number)+";motorl_"+str(number) +" = motor_name.get_pin('d:"+str(pin_number[0])+":p')")
+                  exec("global motorr_"+str(number)+";motorr_"+str(number) +" = motor_name.get_pin('d:"+str(pin_number[1])+":p')")
+                
 
               if mcu_number == "STM32F303K8TX":
                   print("Selected mcu: ",mcu_number) 
                   #hardware = pyfirmata.ArduinoMega(serialdev) # Getting the serial dev input here for example /dev/ttyACM0 , /dev/ttyUSB0 
-                  if node_type == "main_node":
-                        print("devices_data",node_type,component_name,Serialdev,mcu_number,number,pin_number,motor_name,speed,signal_type,gpiol,gpior)
-                        exec(str(component_name)+"_"+str(number)+" = pyfirmata.ArduinoMega('"+str(Serialdev)+"')") #Choosing the data selection from the sequence conditioning  
                   #exec("motordat"+str(number)+" = str(component_name)"+"_"+str(number)+".get_pin('d:"+str(2)+":"+str('p'))
-                  exec("motorl_"+str(number) +" = "+str(motor_name)+".get_pin('d:"+str(pin_number[0])+":"+str(signal_type)+"')")
-                  exec("motorr_"+str(number) +" = "+str(motor_name)+".get_pin('d:"+str(pin_number[1])+":"+str(signal_type)+"')")
+                  exec("global motorl_"+str(number)+";motorl_"+str(number) +" = motor_name.get_pin('d:"+str(pin_number[0])+":p')")
+                  exec("global motorr_"+str(number)+";motorr_"+str(number) +" = motor_name.get_pin('d:"+str(pin_number[1])+":p')")
+                 
+           def Serial_DC_motor_pins_drive(self,mcu_number,number,speed,gpiol,gpior):
+              if mcu_number == "STM32F103C8TX": # Getting the microcontroller series
+                  print("Selected mcu: ",mcu_number+" motor logic",str(speed),str(gpiol),str(gpior))
+                  exec("if gpiol"+" == 1 and gpior"+"== 0:"+"\n\t"+"motorl_"+str(number)+".write("+str(speed)+")"+"\n\t"+"motorr_"+str(number)+".write(0)") 
+                  exec("if gpiol"+" == 0 and gpior"+"== 1:"+"\n\t"+"motorl_"+str(number)+".write(0)"+"\n\t"+"motorr_"+str(number)+".write("+str(speed)+")") 
+                  exec("if gpiol"+" == 0 and gpior"+"== 0:"+"\n\t"+"motorl_"+str(number)+".write(0)"+"\n\t"+"motorr_"+str(number)+".write(0)")
+              if mcu_number == "STM32F303C8TX":
+                  print("Selected mcu: ",mcu_number+" motor logic",str(speed),str(gpiol),str(gpior))
                   exec("if gpiol"+" == 1 and gpior"+"== 0:"+"\n\t"+"motorl_"+str(number)+".write("+str(speed)+")"+"\n\t"+"motorr_"+str(number)+".write(0)") 
                   exec("if gpiol"+" == 0 and gpior"+"== 1:"+"\n\t"+"motorl_"+str(number)+".write(0))"+"\n\t"+"motorr_"+str(number)+".write("+str(speed)+")") 
-                  exec("if gpiol"+" == 0 and gpior"+"== 0:"+"\n\t"+"motorl_"+str(number)+".write(0)"+"\n\t"+"motorr_"+str(number)+".write(0)") 
-                  
+                  exec("if gpiol"+" == 0 and gpior"+"== 0:"+"\n\t"+"motorl_"+str(number)+".write(0)"+"\n\t"+"motorr_"+str(number)+".write(0)")     
            def Serial_stepper_driver(self,serialdev,g_code): # Getting the stepper motor board name to classify the board 
                                      
                   pass 
@@ -400,6 +398,23 @@ class Action_control(object):
                   pass  
 
            #>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>   
+class Analog_sensor_read(object):
+           # Reading from raw analog serial input 
+           def Analog_raw_serial(self):
+                  pass 
+           def Analog_Iteration_tools(self,sensor_name,sensor_serial):
+                  exec("global "+str(sensor_name)+"_it"+";"+str(sensor_name)+"_it"+" = pyfirmata.util.Iterator(sensor_serial)")
+                  exec("global "+str(sensor_name)+"_it"+";"+str(sensor_name)+"_it"+".start()")
+           def Analog_setting_pins(self,sensor_serial,pins_array): # serial port ,array list of pins
+                 for pins in range(pins_array[0],pins_array[1]): # creating pins analog input 
+                    exec("sensor_serial.analog["+str(pins)+"].enable_reporting()")
+           def Analog_firmware_serial(self,sensor_name,number,sensor_serial,pins,ip,port):
+                    #print("global sensor_out;sensor_out"+" = float(sensor_serial.analog["+str(pins)+"].read() or 0)")
+                    exec("global sensor_out;sensor_out"+" = float(sensor_serial.analog["+str(pins)+"].read() or 0)")
+                    sensor_message = {str(sensor_name):sensor_out}
+                    #print(sensor_message)
+                    analog_read_dat = Internal_Publish_subscriber()
+                    analog_read_dat.Publisher_dict(ip,sensor_message,port)                   
 class Visual_Cam_optic(object):  # Calling the camera and optic devices input for image processing publish and subscriber on one platform to be easy to movidy with one library 
            #Camera data in the raw input      
            def Camera_raw(self,cam_num,Buffers,portdata,ip_number): # Getting the raw image of the camera
@@ -642,21 +657,28 @@ class Kinematic_controlposition(object):
                    pass  
             def Catesian_robot(self):
                    pass
+
             def pan_tilt(self,x,y,z):  # Calculate the angle of pivot joint 
-                   d = math.sqrt(math.pow(x,2)+math.pow(y,2)) 
-                   angle_theta = math.degrees(math.atan(z/d)) # turning radians to degrees 
-                   return angle_theta # Getting the angle theta output 
+                   dz = math.sqrt(math.pow(x,2)+math.pow(y,2)) 
+                   dx = math.sqrt(math.pow(y,2)+math.pow(z,2))
+                   dy = math.sqrt(math.pow(x,2)+math.pow(z,2))
+                   angle_theta_z = math.degrees(math.atan(z/dz)) # turning radians to degrees 
+                   angle_theta_x = math.degrees(math.atan(x/dx))  
+                   angle_theta_y = math.degrees(math.atan(y/dy)) 
+                   return angle_theta_x,angle_theta_y,angle_theta_z # Getting the angle theta output 
+             
 class Cellular_networking_com(object): # Getting the location outdoor from the cellular module in lattitude and longitude in realtime 
            def raw_command_input(self,sim800l,command_input,ip,port):
                 #sim800l = serial.Serial('/dev/ttyS0',115200) # input the AT command into the right specific port data 
                 print("GPRS module found................[OK]")
-                sim800l.write('AT\n;'.encode('UTF-8'))
+                sim800l.write('AT;\n'.encode('UTF-8'))
                 #sim800l.write('ATD+ +66970762483\n;'.encode('UTF-8')) #
                 Getresponse = sim800l.readline().decode('UTF-8')
                 print("GPRS command.........",Getresponse)
                 Getresponse_status = sim800l.readline().decode('UTF-8')
-                print("GPRS status.........",Getresponse_status)      
-                sim800l.write(str(command_input).encode('UTF-8')) # Getting the sim800l command to send to the module call                
+                print("GPRS status.........",Getresponse_status)  
+                command_data = str(command_input)+";\n"    
+                sim800l.write(str(command_data).encode('UTF-8')) # Getting the sim800l command to send to the module call                
                 command_ = sim800l.readline().decode('UTF-8')
                 display_output = command_
                 print(display_output) #Getting the output  
@@ -664,25 +686,26 @@ class Cellular_networking_com(object): # Getting the location outdoor from the c
                 gprs_mod = Internal_Publish_subscriber()
                 gprs_mod.Publisher_dict(ip,gprs_message,port)
            def Location_cellular_network(self,sim800l,ip,port):
+                sim800l.write('AT;\n'.encode('UTF-8')) 
+                sim800l.readline().decode('UTF-8') 
                 sim800l.write('AT +SAPBR = 3,1,"CONTYPE","GPRS"\n;'.encode('UTF-8'))
                 sim800l.write('AT +SAPBR = 3,1,"APN","RCMNET"\n;'.encode('UTF-8'))
                 sim800l.write('AT +SAPBR = 1,1\n;'.encode('UTF-8'))
                 sim800l.write('AT +SAPBR= 1,1\n;'.encode('UTF-8'))
                 sim800l.write('AT +SAPBR= 2,1\n;'.encode('UTF-8'))
                 sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8'))
-                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8'))
-                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8'))
-                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8'))
-                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8'))
-                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8'))
-                sim800l.write('AT +CIPGSMLOC=1,1\n;'.encode('UTF-8')) 
+                print(sim800l.readline().decode('UTF-8'))  
+                loc_message = {"GPRS_Location_message":loc} 
+                location_message = Internal_Publish_subscriber()
+                location_message.Publisher_dict(ip,loc_message,port)
                 if sim800l.readline().decode('UTF-8').split(" ")[0] == "+CIPGSMLOC:":
                        loc = sim800l.readline().decode('UTF-8').split(" ")[1]
                        print("Long,Lat:",loc) # getting the location from the tuple of data 
                        loc_message = {"GPRS_Location_message":loc} 
                        location_message = Internal_Publish_subscriber()
                        location_message.Publisher_dict(ip,loc_message,port)
-              
+
+
               
 class Navigation_sensors(object): 
            def Lidar_nav(self):
@@ -848,6 +871,19 @@ def Sensor_array_input(sensor_name,number,sensor_list_input,vis_output,size_vide
         exec("global data_return;data_return = "+str(sensor_name)+"_"+str(number)+".Numpy_array_image_frame("+str(sensor_list_input)+","+str(title_name)+","+str(vis_output)+","+str(size_video)+")")
         return data_return   
 
+
+def Sensor_anaiter(sensor_name,number,sensor_serial):
+           exec("sensor_name_"+str(number)+" = Analog_sensor_read()")
+           exec("sensor_name_"+str(number)+".Analog_Iteration_tools('"+str(sensor_name)+"',sensor_serial)")
+
+def Sensor_anasetpins(sensor_name,number,sensor_serial,pins_array):
+           exec("sensor_name_"+str(number)+" = Analog_sensor_read()")
+           exec("sensor_name_"+str(number)+".Analog_setting_pins(sensor_serial,"+str(pins_array)+")")
+
+def Sensor_anafirmserial(sensor_name,number,sensor_serial,pins,ip,port):
+            exec("sensor_name_"+str(number)+" = Analog_sensor_read()")
+            exec("sensor_name_"+str(number)+".Analog_firmware_serial(sensor_name,"+str(number)+","+"sensor_serial"+","+str(pins)+",'"+str(ip)+"',"+str(port)+")") 
+
 def Array_streamer_input(cam_num,array_frame,Buffers,ip_number,portdata):
            exec("Sensor_"+str(cam_num)+"= Array_image_streamer()") 
            exec("Sensor_"+str(cam_num)+".Array_image_transfer("+str(cam_num)+","+str(array_frame)+","+str(Buffers)+",'"+str(ip_number)+"',"+str(portdata)+")")
@@ -858,11 +894,13 @@ def Gyroscope_sensor(module,ip,port):  # Getting i2c address
              gyro_pos_1.Gyro_sensor_module(module,i2c_bus,ip,port)# Getting i2c address and name of module
              
 # Checking if serial is main_node or node 
-def Create_serial_motor(node_type,component_name,Serialdev,mcu_number,number,pin_number,motor_name,speed,signal_type,gpiol,gpior):
-        #node_type,component_name,Serialdev,mcu_number,number,pin_number,motor_name,speed,signal_type,gpiol,gpior
-        sensor1 = Action_control()    # main_node motor /dev/ttyUSB0 STM32F103C8TX 1 [2, 3] motor_1 1 p 1 0 
-        sensor1.Serial_DC_motordriver(node_type,component_name,Serialdev,mcu_number,number,pin_number,motor_name,speed,signal_type,gpiol,gpior)
-        
+def Create_serial_motor(mcu_number,number,pin_number,motor_name):
+        #node_type,component_name,Serialdev,mcu_number,number,pin_number,motor_name,speed,gpiol,gpior
+        motor_node = Action_control()    # STM32F103C8TX 1 [2, 3] motor_1 1 1 0 
+        motor_node.Serial_MCU(mcu_number,number,pin_number,motor_name)
+def Create_serial_motor_logic(mcu_number,number,speed,gpiol,gpior):
+        motor_logic  = Action_control()
+        motor_logic.Serial_DC_motor_pins_drive(mcu_number,number,speed,gpiol,gpior)            
 def Create_i2c_Servo(servo_num,servo_name,angle,pin):
      try: 
         # define the name angle and pin of the servo to connect into the board 
