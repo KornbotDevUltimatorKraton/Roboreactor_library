@@ -265,12 +265,8 @@ class Microcontroller_pins(object): # Choose one microcontroller to control the 
                                ref_sub[0] = eval(str(Sub_label)),eval(str(Sub_label2))
                                Pins_list.append(ref_sub.get(0))
                                Pins_label[mcu_code] = Pins_list
-                               #print(Pins_list)
-                               #Pins_label[mcu_name[0]] = Pins_list
-                               #print(Pins_label)
                                Pins_label.get(mcu_code)
-                               #for r in Pins_label.get(mcu_code): 
-                               #                print(r)
+                              
                      return json.dumps(Pins_label)
 class Internal_Publish_subscriber(object): 
         
@@ -293,6 +289,7 @@ class Internal_Publish_subscriber(object):
                   print("Connection error via ip: ",str(ip))  
         def Subscriber_dict(self,ip,buffer_size,port): 
             try: 
+                   
                exec("sock_"+str(port)+" =socket.socket(socket.AF_INET,socket.SOCK_DGRAM)")
                address = (ip,port) 
                exec("sock_"+str(port)+".bind(address)") 
@@ -301,6 +298,7 @@ class Internal_Publish_subscriber(object):
                message = json.loads(received)
                exec("print(message,type(message),addr)")
                return message
+
             except:
                 print("Subscriber connection value error at ip: ",ip,port) # Getting the report on the ip and port value 
         def Subscriber_string(self,ip,buffer_size,port): 
@@ -364,9 +362,19 @@ class Action_control(object):
                   exec("if gpiol"+" == 1 and gpior"+"== 0:"+"\n\t"+"motorl_"+str(number)+".write("+str(speed)+")"+"\n\t"+"motorr_"+str(number)+".write(0)") 
                   exec("if gpiol"+" == 0 and gpior"+"== 1:"+"\n\t"+"motorl_"+str(number)+".write(0))"+"\n\t"+"motorr_"+str(number)+".write("+str(speed)+")") 
                   exec("if gpiol"+" == 0 and gpior"+"== 0:"+"\n\t"+"motorl_"+str(number)+".write(0)"+"\n\t"+"motorr_"+str(number)+".write(0)")     
-           def Serial_stepper_driver(self,serialdev,g_code): # Getting the stepper motor board name to classify the board 
-                                     
-                  pass 
+          
+           def Serial_stepper_driver(self,stepper_num,serialdev,g_code): # Getting the stepper motor board name to classify the board 
+                 
+         
+                 exec("motion_"+str(stepper_num)+" = printcore(serialdev, 115200") # or p.printcore('COM3',115200) on Windows
+                 exec("while not motion_"+str(stepper_num)+".online:\n\ttime.sleep(0.1)")
+                 exec("motion_"+str(stepper_num)+".send_now('M302 P0')") # this will send M105 immediately, ahead of the rest of the print
+                 exec("motion_"+str(stepper_num)+".send_now('M302 S0')")
+                 exec("motion_"+str(stepper_num)+".send_now(g_code)")
+                 exec("motion_"+str(stepper_num)+".pause()")
+                 exec("motion_"+str(stepper_num)+".resume()")
+                 exec("motion_"+str(stepper_num)+".disconnect()")
+               
 
            def Serial_BLDC_motor_Driver(self,GPIO,pwm): 
                    
@@ -524,7 +532,7 @@ class Visual_Cam_optic(object):  # Calling the camera and optic devices input fo
                   # Start the loop of frame rate read
                   exec("for r_"+str(cam_num)+" in count(0):"+"\n\t\tpacket_"+str(cam_num)+",_"+str(cam_num)+" = client_socket_"+str(cam_num)+".recvfrom(BUFF_SIZE_"+str(cam_num)+")"+"\n\t\tdata_"+str(cam_num)+" = base64.b64decode(packet_"+str(cam_num)+",' /')"+"\n\t\tnpdata_"+str(cam_num)+" = np.fromstring(data_"+str(cam_num)+",dtype=np.uint8)"+"\n\t\tframe_"+str(cam_num)+" = cv2.imdecode(npdata_"+str(cam_num)+",1)"+"\n\t\tprint(frame_"+str(cam_num)+")") 
 
-           def Camera_Face_recognition(self,path_data,title_name,cam_num,Buffers,portdata,ip_number):
+           def Camera_Face_recognition(self,path_data,display,ip,port,title_name,cam_num,Buffers,portdata,ip_number):
                   
                   path = '/home/'+str(user)+"/"+str(path_data)  #Getting the file from directoty 
                   try:
@@ -557,7 +565,7 @@ class Visual_Cam_optic(object):  # Calling the camera and optic devices input fo
                   exec("client_socket_"+str(cam_num)+".sendto(message_"+str(cam_num)+",(host_ip_"+str(cam_num)+","+"port_"+str(cam_num)+"))")
                   exec("fps_"+str(cam_num)+",st_"+str(cam_num)+",frames_to_count_"+str(cam_num)+",cnt_"+str(cam_num)+" = (0,0,20,0)")
                   # Start the loop of frame rate read
-                  exec("for r_"+str(cam_num)+" in count(0):"+"\n\t\tpacket_"+str(cam_num)+",_"+str(cam_num)+" = client_socket_"+str(cam_num)+".recvfrom(BUFF_SIZE_"+str(cam_num)+")"+"\n\t\tdata_"+str(cam_num)+" = base64.b64decode(packet_"+str(cam_num)+",' /')"+"\n\t\tnpdata_"+str(cam_num)+" = np.fromstring(data_"+str(cam_num)+",dtype=np.uint8)"+"\n\t\tframe_"+str(cam_num)+" = cv2.imdecode(npdata_"+str(cam_num)+",1)"+"\n\t\tprint(frame_"+str(cam_num)+")"+"\n\t\tsmall_frame_"+str(cam_num)+" = cv2.resize(frame_"+str(cam_num)+", (0, 0), fx=0.25, fy=0.25)"+"\n\t\trgb_small_frame_"+str(cam_num)+" = small_frame_"+str(cam_num)+"[:, :, ::-1]"+"\n\t\tif process_this_frame:"+"\n\t\t\tface_locations_"+str(cam_num)+" = face_recognition.face_locations(rgb_small_frame_"+str(cam_num)+")"+"\n\t\t\tface_encodings_"+str(cam_num)+" = face_recognition.face_encodings(rgb_small_frame_"+str(cam_num)+", face_locations_"+str(cam_num)+")"+"\n\t\t\tface_names = []"+"\n\t\t\tfor face_encoding in face_encodings_"+str(cam_num)+":"+"\n\t\t\t\tmatches_"+str(cam_num)+" = face_recognition.compare_faces(known_face_encodings, face_encoding)"+"\n\t\t\t\tname = 'Unknown'"+"\n\t\t\t\tface_distances_"+str(cam_num)+" = face_recognition.face_distance(known_face_encodings, face_encoding)"+"\n\t\t\t\tbest_match_index_"+str(cam_num)+" = np.argmin(face_distances_"+str(cam_num)+")"+"\n\t\t\t\tif matches_"+str(cam_num)+"[best_match_index_"+str(cam_num)+"]:"+"\n\t\t\t\t\tname = known_face_names[best_match_index_"+str(cam_num)+"]"+"\n\t\t\t\tface_names.append(name)"+"\n\t\t\t\tprint(frame_"+str(cam_num)+")"+"\n\t\tprocess_this_frame = not process_this_frame"+"\n\t\tfor (top, right, bottom, left), name in zip(face_locations_"+str(cam_num)+", face_names):"+"\n\t\t\ttop *=4"+"\n\t\t\tright *=4"+"\n\t\t\tbottom *=4"+"\n\t\t\tleft *=4"+"\n\t\t\tcv2.rectangle(frame_"+str(cam_num)+", (left, top), (right, bottom), (0, 0, 255), 2)"+"\n\t\t\tcv2.rectangle(frame_"+str(cam_num)+", (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)"+"\n\t\t\tfont = cv2.FONT_HERSHEY_DUPLEX"+"\n\t\t\tcv2.putText(frame_"+str(cam_num)+", name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)"+"\n\t\tcv2.imshow('"+str(title_name)+"', frame_"+str(cam_num)+")"+"\n\t\tif cv2.waitKey(1) & 0xFF == ord('q'):"+"\n\t\t\tbreak") 
+                  exec("for r_"+str(cam_num)+" in count(0):"+"\n\t\tpacket_"+str(cam_num)+",_"+str(cam_num)+" = client_socket_"+str(cam_num)+".recvfrom(BUFF_SIZE_"+str(cam_num)+")"+"\n\t\tdata_"+str(cam_num)+" = base64.b64decode(packet_"+str(cam_num)+",' /')"+"\n\t\tnpdata_"+str(cam_num)+" = np.fromstring(data_"+str(cam_num)+",dtype=np.uint8)"+"\n\t\tframe_"+str(cam_num)+" = cv2.imdecode(npdata_"+str(cam_num)+",1)"+"\n\t\tprint(frame_"+str(cam_num)+")"+"\n\t\tsmall_frame_"+str(cam_num)+" = cv2.resize(frame_"+str(cam_num)+", (0, 0), fx=0.25, fy=0.25)"+"\n\t\trgb_small_frame_"+str(cam_num)+" = small_frame_"+str(cam_num)+"[:, :, ::-1]"+"\n\t\tif process_this_frame:"+"\n\t\t\tface_locations_"+str(cam_num)+" = face_recognition.face_locations(rgb_small_frame_"+str(cam_num)+")"+"\n\t\t\tface_encodings_"+str(cam_num)+" = face_recognition.face_encodings(rgb_small_frame_"+str(cam_num)+", face_locations_"+str(cam_num)+")"+"\n\t\t\tface_names = []"+"\n\t\t\tfor face_encoding in face_encodings_"+str(cam_num)+":"+"\n\t\t\t\tmatches_"+str(cam_num)+" = face_recognition.compare_faces(known_face_encodings, face_encoding)"+"\n\t\t\t\tname = 'Unknown'"+"\n\t\t\t\tface_distances_"+str(cam_num)+" = face_recognition.face_distance(known_face_encodings, face_encoding)"+"\n\t\t\t\tbest_match_index_"+str(cam_num)+" = np.argmin(face_distances_"+str(cam_num)+")"+"\n\t\t\t\tif matches_"+str(cam_num)+"[best_match_index_"+str(cam_num)+"]:"+"\n\t\t\t\t\tname = known_face_names[best_match_index_"+str(cam_num)+"]"+"\n\t\t\t\tface_names.append(name)"+"\n\t\t\t\tprint(frame_"+str(cam_num)+")"+"\n\t\tprocess_this_frame = not process_this_frame"+"\n\t\tfor (top, right, bottom, left), name in zip(face_locations_"+str(cam_num)+", face_names):"+"\n\t\t\ttop *=4"+"\n\t\t\tright *=4"+"\n\t\t\tbottom *=4"+"\n\t\t\tleft *=4"+"\n\t\t\tcv2.rectangle(frame_"+str(cam_num)+", (left, top), (right, bottom), (0, 0, 255), 2)"+"\n\t\t\tcv2.rectangle(frame_"+str(cam_num)+", (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)"+"\n\t\t\tfont = cv2.FONT_HERSHEY_DUPLEX"+"\n\t\t\tFr_"+str(cam_num)+" = Internal_Publish_subscriber()"+"\n\t\t\tface_message = {'Name':name,'X':int(top),'Y':int(right),'dx':list(face_distances_"+str(cam_num)+")[0],'dy'"+":list(face_distances_"+str(cam_num)+")[1]}"+"\n\t\t\tFr_"+str(cam_num)+".Publisher_dict('"+str(ip)+"',face_message,"+str(port)+")"+"\n\t\t\tcv2.putText(frame_"+str(cam_num)+", name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)"+"\n\t\tif "+str(display)+" == 1:"+"\n\t\t\tcv2.imshow('"+str(title_name)+"', frame_"+str(cam_num)+")"+"\n\t\tif cv2.waitKey(1) & 0xFF == ord('q'):"+"\n\t\t\tbreak") 
            def Camera_Visual_to_text(self,cam_num,Buffers,portdata,port_message,ip_number): 
                   exec("BUFF_SIZE_"+str(cam_num)+" = "+str(Buffers))
                   exec("client_socket_"+str(cam_num)+" = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)")
@@ -872,13 +880,14 @@ def Create_node_sub(t,addresses,buffer,initial_port):
            exec("sub_"+str(t)+" = Internal_Publish_subscriber()")  
            exec("global data_return;data_return"+" = sub_"+str(t)+".Subscriber_dict('"+str(address)+"',"+str(buffer)+","+str(port)+")")
            return  data_return 
-def Face_recognition(path_data,title_name,cam_num,Buffers,portdata,ip_number):
+def Face_recognition(path_data,display,ip,port,title_name,cam_num,Buffers,portdata,ip_number):
 
         face_rec = Visual_Cam_optic()
-        face_rec.Camera_Face_recognition(path_data,title_name,cam_num,Buffers,portdata,ip_number)
+        face_rec.Camera_Face_recognition(path_data,display,ip,port,title_name,cam_num,Buffers,portdata,ip_number)
 
 
 def Speech_recognition(initial_lang,destination_lang,address,port):
+           
            speech_recog = Audio_function() 
            speech_recog.Speech_recognition(initial_lang,destination_lang,address,port)
 

@@ -5,7 +5,7 @@ def Camera_raw():
         Camera_pub_node(0,65536,5609,'127.0.0.1')
 
 def Fr_recognition():
-        Face_recognition("Face_db",0,"Face_recognition_1",0,65536,5609,'127.0.0.1')
+        Face_recognition("Face_db",0,'127.0.0.1',5070,"Face_recognition_1",0,65536,5609,'127.0.0.1')
         
 def speech_recog():
      for rt in count(0):
@@ -22,13 +22,18 @@ def Speech_node():
             speech_key = list(data_out)[0]
             if speech_key != " ":
                  Speaking_languages(speech_key,'th','1.04',100) 
-
+def face_rec_sub_node(): 
+            for rt in count(0):
+                   global data_out_1;data_out_1 = Create_node_sub(1,"127.0.0.1",4096,5070)
+                   print(data_out_1)
 
 t1 = threading.Thread(target=speech_recog)
 t2 = threading.Thread(target=Speech_node)
 t3 = threading.Thread(target=Camera_raw)
 t4 = threading.Thread(target=Fr_recognition)
+t5 = threading.Thread(target=face_rec_sub_node)
 t1.start() 
 t2.start() 
 t3.start() 
 t4.start()           
+t5.start()
