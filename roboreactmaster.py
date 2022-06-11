@@ -582,7 +582,7 @@ class Visual_Cam_optic(object):
         exec("print('Listening at,socket_address_"+str(cam_num)+"')")
         exec("for r_"+str(cam_num)+" in count(0):"+"\n\tclient_socket_"+str(cam_num)+","+"addr_"+str(cam_num)+" = server_socket_"+str(cam_num)+".accept()"+"\n\tcamera_"+str(cam_num)+" = True"+"\n\tif camera_"+str(cam_num)+" == True:"+"\n\t\tvid_"+str(cam_num)+" = cv2.VideoCapture("+str(cam_num)+")"+"\n\telse:"+"\n\t\tprint('Fail to connect camera "+str(cam_num)+"')"+"\n\ttry:"+"\n\t\tprint('testing  no EOF')"+"\n\t\tif client_socket_"+str(cam_num)+":\n\t\t\tprint('test no EOF')"+"\n\t\t\twhile(vid_"+str(cam_num) +
              ".isOpened()):"+"\n\t\t\t\tprint('Successful running')"+"\n\t\t\t\timg_"+str(cam_num)+",frame_"+str(cam_num)+" = vid_"+str(cam_num)+".read()"+"\n\t\t\t\tframe_"+str(cam_num)+" = imutils.resize(frame_"+str(0)+",width="+str(Width)+")"+"\n\t\t\t\ta_"+str(cam_num)+" = pickle.dumps(frame_"+str(cam_num)+")"+"\n\t\t\t\tmessage_"+str(cam_num)+" = struct.pack('Q',len(a_"+str(cam_num)+"))+a_"+str(cam_num)+"\n\t\t\t\tclient_socket_"+str(cam_num)+".sendall(message_"+str(0)+")"+"\n\texcept:"+"\n\t\tprint('Data fail interprete')")
-
+    
     def Cache_camera_server(self,server_ip_address, cache_ip_host, port):
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         host_name = socket.gethostname()
@@ -641,9 +641,34 @@ class Visual_Cam_optic(object):
                 thread = threading.Thread(target=serve_client, args=(addr,client_socket))
                 thread.start()              
                 print("total clients ",threading.activeCount() - 2)  
+    def Camera_QR_cache(self,cam_num,display,cache_ip_host,port):
+                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                host_ip = str(cache_ip_host)
+                client_socket.connect((host_ip,port))
+                data = b""
+                payload_size = struct.calcsize("Q")
+                for r in count(0):
+                       while len(data) < payload_size: 
+                               packet = client_socket.recv(4*1024) 
+                               if not packet: break 
+                               data += packet 
+                       packed_msg_size = data[:payload_size]
+                       data = data[payload_size:]
+                       msg_size = struct.unpack("Q", packed_msg_size)[0] 
+                       while len(data) < msg_size: 
+                              data += client_socket.recv(4*1024) 
+                       frame_data = data[:msg_size]
+                       data = data[msg_size:]
+                       frame = pickle.loads(frame_data)
+                       #Adding image processing algorithm here 
 
+                       if display == 1: 
+                              cv2.imshow("Reaceiving video from camera "+str(cam_num),frame)
+                       key = cv2.waitKey(1) & 0xFF 
+                       if key == ord('q'): 
+                              break 
+                client_socket.close()                                  
     # Getting the raw camera image
-
     def Camera_QR(self, cam_num, Buffers, portdata, port_message, ip_number):
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         exec("BUFF_SIZE_"+str(cam_num)+" = "+str(Buffers))
@@ -1152,6 +1177,9 @@ def Camera_multi_cache(cam_num, ip_address, port, Width):
 def Cache_server(server_ip_address,cache_ip_host,port): 
        multicache_server = Visual_Cam_optic()
        multicache_server.Cache_camera_server(server_ip_address,cache_ip_host,port)
+def Camera_Qr_cache(cam_num,display,cache_ip_host,port):
+       qr_cache = Visual_Cam_optic() 
+       qr_cache.Camera_QR_cache(cam_num,display,cache_ip_host,port)
 
 def Face_recognition(path_data, display, ip, port, title_name, cam_num, Buffers, portdata, ip_number):
 
