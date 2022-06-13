@@ -641,7 +641,7 @@ class Visual_Cam_optic(object):
                 thread = threading.Thread(target=serve_client, args=(addr,client_socket))
                 thread.start()              
                 print("total clients ",threading.activeCount() - 2)  
-    def Camera_QR_cache(self,cam_num,display,cache_ip_host,port):
+    def Camera_QR_cache(self,cam_num,display,cache_ip_host,port,message_ip_address,port_message):
                 client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 host_ip = str(cache_ip_host)
                 client_socket.connect((host_ip,port))
@@ -661,13 +661,117 @@ class Visual_Cam_optic(object):
                        data = data[msg_size:]
                        frame = pickle.loads(frame_data)
                        #Adding image processing algorithm here 
-
+                       Image_0 = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+                       try:
+                                barcodes_0 = pyzbar.decode(Image_0)
+                                print(barcodes_0)
+                                for barcode_0 in barcodes_0:
+                                        (x, y, w, h) = barcode_0.rect
+                                        cv2.rectangle(Image_0, (x, y), (x + w, y + h), (0, 0, 255), 2)
+                                        barcodeData_0 = barcode_0.data.decode('utf-8')
+                                        barcodeType_0 = barcode_0.type
+                                        text_0= '{} {}'.format(barcodeData_0, barcodeType_0)
+                                print('Text reading from qr code',text_0)
+                                print('Coordinate ',text_0,x,y)
+                                global message_data;message_data = {'Message':text_0,'X':x,'Y':y}
+                                print('from message ',message_data)
+                                QR = Internal_Publish_subscriber()
+                                QR.Publisher_dict(message_ip_address,message_data,port_message) # using different ip address to sending the data to subscriber node 
+                       except:
+                                print('No QRcode detected!') 
                        if display == 1: 
-                              cv2.imshow("Reaceiving video from camera "+str(cam_num),frame)
+                              cv2.imshow("Reaceiving video from camera "+str(cam_num),Image_0)
+                              
                        key = cv2.waitKey(1) & 0xFF 
                        if key == ord('q'): 
                               break 
-                client_socket.close()                                  
+                client_socket.close()         
+    #Face_recognition cache             
+    def Face_recog_cache(self,cam_num,path_data,display,cache_ip_host,port,message_ip_address,port_message):
+              
+        # Getting the file from directoty
+        path = '/home/'+str(user)+"/"+str(path_data)
+        try:
+            # Getting the directory create with the path
+            os.mkdir(path, mode=0o777)
+        except:
+            pass
+        # Getting path of the face data inside the list
+        recognized_data = os.listdir(path)
+        for r in recognized_data:
+            people = r.split(".")[0]
+            exec(str(people)+"_image = face_recognition.load_image_file('" +
+                 str(people)+".jpg'"+")")
+            exec("global"+" "+str(people)+"_face_encoding;"+str(people) +
+                 "_face_encoding = face_recognition.face_encodings("+str(people)+"_image)[0]")
+        known_face_encodings = []
+        for t in recognized_data:
+            exec("known_face_encodings.append(" +
+                 str(t.split(".")[0])+"_face_encoding"+")")
+        known_face_names = []
+        for y in recognized_data:
+            exec("known_face_names.append("+"'"+str(y.split(".")[0])+"'"+")")
+        exec("face_locations = []")
+        exec("face_encodings = []")
+        exec("face_names = []")
+        process_this_frame = True
+        client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        host_ip = str(cache_ip_host)
+        client_socket.connect((host_ip,port))
+        data = b""
+        payload_size = struct.calcsize("Q")
+        for r in count(0):
+                       while len(data) < payload_size: 
+                               packet = client_socket.recv(4*1024) 
+                               if not packet: break 
+                               data += packet 
+                       packed_msg_size = data[:payload_size]
+                       data = data[payload_size:]
+                       msg_size = struct.unpack("Q", packed_msg_size)[0] 
+                       while len(data) < msg_size: 
+                              data += client_socket.recv(4*1024) 
+                       frame_data = data[:msg_size]
+                       data = data[msg_size:]
+                       frame = pickle.loads(frame_data) 
+                       print(frame)
+                       #Face _recognition algorithm here 
+                       '''
+                       small_frame_0 = cv2.resize(frame, (0, 0), fx=0.25, fy=0.25)
+                       rgb_small_frame_0 = small_frame_0[:, :, ::-1]
+                       if process_this_frame:
+                             face_locations_0 = face_recognition.face_locations(rgb_small_frame_0)
+                             face_encodings_0 = face_recognition.face_encodings(rgb_small_frame_0, face_locations_0)
+                             face_names = []
+                             for face_encoding in face_encodings_0:
+                                matches_0 = face_recognition.compare_faces(known_face_encodings, face_encoding)
+                                name = 'Unknown'
+                                face_distances_0 = face_recognition.face_distance(known_face_encodings, face_encoding)
+                                best_match_index_0 = np.argmin(face_distances_0)
+                                if matches_0[best_match_index_0]:
+                                        name = known_face_names[best_match_index_0]
+                                face_names.append(name)
+                                process_this_frame = not process_this_frame
+                                for (top, right, bottom, left), name in zip(face_locations_0, face_names):
+                                         top *=4
+                                         right *=4
+                                         bottom *=4
+                                         left *=4
+                                         cv2.rectangle(frame, (left, top), (right, bottom), (0, 0, 255), 2)
+                                         cv2.rectangle(frame, (left, bottom - 35), (right, bottom), (0, 0, 255), cv2.FILLED)
+                                         font = cv2.FONT_HERSHEY_DUPLEX
+                                         Fr_0 = Internal_Publish_subscriber()
+                                         face_message = {'Name':name,'X':int(top),'Y':int(right),'dx':list(face_distances_0)[0],'dy':list(face_distances_0)[1]}
+                                         Fr_0.Publisher_dict(str(message_ip_address),face_message,port_message)
+                                         cv2.putText(frame, name, (left + 6, bottom - 6), font, 1.0, (255, 255, 255), 1)
+                        '''
+                       if display == 1: 
+                                cv2.imshow("Reaceiving video from camera "+str(cam_num),frame)
+                                    
+                       key = cv2.waitKey(1) & 0xFF 
+                       if key == ord('q'): 
+                              break 
+        client_socket.close()   
+                 
     # Getting the raw camera image
     def Camera_QR(self, cam_num, Buffers, portdata, port_message, ip_number):
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
@@ -798,7 +902,7 @@ class Visual_Cam_optic(object):
         exec("fps_"+str(cam_num)+",st_"+str(cam_num)+",frames_to_count_" +
              str(cam_num)+",cnt_"+str(cam_num)+" = (0,0,20,0)")
         # Start the loop of frame rate read
-
+        
         exec("for r_"+str(cam_num)+" in count(0):"+"\n\t\tpacket_"+str(cam_num)+",_"+str(cam_num)+" = client_socket_"+str(cam_num)+".recvfrom(BUFF_SIZE_"+str(cam_num)+")"+"\n\t\tdata_"+str(cam_num)+" = base64.b64decode(packet_" +
              str(cam_num)+",' /')"+"\n\t\tnpdata_"+str(cam_num)+" = np.fromstring(data_"+str(cam_num)+",dtype=np.uint8)"+"\n\t\tframe_"+str(cam_num)+" = cv2.imdecode(npdata_"+str(cam_num)+",1)"+"\n\t\tprint(frame_"+str(cam_num)+")")
 
@@ -1177,9 +1281,14 @@ def Camera_multi_cache(cam_num, ip_address, port, Width):
 def Cache_server(server_ip_address,cache_ip_host,port): 
        multicache_server = Visual_Cam_optic()
        multicache_server.Cache_camera_server(server_ip_address,cache_ip_host,port)
-def Camera_Qr_cache(cam_num,display,cache_ip_host,port):
+def Camera_Qr_cache(cam_num,display,cache_ip_host,port,message_ip_address,port_message):
        qr_cache = Visual_Cam_optic() 
-       qr_cache.Camera_QR_cache(cam_num,display,cache_ip_host,port)
+       qr_cache.Camera_QR_cache(cam_num,display,cache_ip_host,port,message_ip_address,port_message)
+
+def Face_cache(cam_num,path_data,display,cache_ip_host,port,message_ip_address,port_message):
+       Face_rec_cache = Visual_Cam_optic() 
+       Face_rec_cache.Face_recog_cache(cam_num,path_data,display,cache_ip_host,port,message_ip_address,port_message)
+
 
 def Face_recognition(path_data, display, ip, port, title_name, cam_num, Buffers, portdata, ip_number):
 
