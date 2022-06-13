@@ -2,12 +2,29 @@
 # Author: Chanapai Chuadchum
 # Project: Roboreactor code generator
 # Date of development: 2022-05-27 13:55:43.077220
-import adafruit_mpu6050
-import adafruit_icm20x
-from adafruit_pca9685 import PCA9685
-from adafruit_motor import servo
-import busio
-from board import SCL, SDA
+import platform 
+import configparser 
+config = configparser.ConfigParser() 
+config.read('robolib_config.cfg')
+os_support = platform.uname() 
+print(os_support)
+ar_os = os_support.release.split("-")[1]
+compat_gpio_board = ['v7l+'] 
+print(ar_os)
+if str(ar_os) in compat_gpio_board:
+       print("Found raspberrypi architecture")
+       import adafruit_mpu6050
+       import adafruit_icm20x
+       from adafruit_pca9685 import PCA9685
+       from adafruit_motor import servo
+       import busio
+       from board import SCL, SDA
+       import gpiozero
+       from gpiozero import Robot, MCP3008
+       from gpiozero import PhaseEnableMotor  # Getting the motor to working
+       i2c_bus = busio.I2C(SCL, SDA)
+       # Create a simple PCA9685 class instance.
+      
 from imaplib import Internaldate2tuple
 import threading
 import requests  # Getting the micro controller data
@@ -16,10 +33,8 @@ import json
 import pickle
 import getpass
 import pandas as pd
-import gpiozero
 # Getting the analog value input from the library
-from gpiozero import Robot, MCP3008
-from gpiozero import PhaseEnableMotor  # Getting the motor to working
+
 import face_recognition  # Getting the face recognition to working
 import pyfirmata  # Getting the pyfirmata for the librery of the serial communication between the hardware
 from pyzbar import pyzbar
@@ -50,10 +65,9 @@ from googletrans import Translator
 import wordninja
 import difflib
 from geopy.geocoders import Nominatim  # Getting the geo positioning data
-import psycopg2  # Data base library
-import configparser  # getting the configure part to write the configuretion mode of code
-import datetime  # internal clock datetime
-import cv2
+import psycopg2 
+import configparser  
+
 try:
     print("Give the permission to local uart")
     os.system("sudo chmod -R 777 /dev/ttyAMA0")
@@ -73,15 +87,12 @@ user = getpass.getuser()
 
 # Import the PCA9685 module.
 # Create the I2C bus interface.
-i2c_bus = busio.I2C(SCL, SDA)
-
-# Create a simple PCA9685 class instance.
 try:
-    print("i2c devices ", i2c_bus.scan())
-    pca = PCA9685(i2c_bus)
-    pca.frequency = 50
+     print("i2c devices ", i2c_bus.scan())
+     pca = PCA9685(i2c_bus)
+     pca.frequency = 50
 except:
-    print("No servo devices connect with the computer")
+     print("No servo devices connect with the computer")
 mem_sub_variable = []  # mem subscriber return variable
 # Collected the used pins on the list to avoid clash on the system hardware control
 mem_used_pins = {}
@@ -417,21 +428,25 @@ class Action_control(object):
         exec("motion_"+str(stepper_num)+".pause()")
         exec("motion_"+str(stepper_num)+".resume()")
         exec("motion_"+str(stepper_num)+".disconnect()")
+    
+    def Serial_BLDC_motor_Driver(self,mcu_name,GPIO, pwm,servo_name):
 
-    def Serial_BLDC_motor_Driver(self, GPIO, pwm):
-
-        pass
+             exec("")
 
     # Build the servo motor from scratch using the control theory algorithm to calibrate the angle of the servo motor
-    def Serial_Servo_motor(self, number, motor_type, angle):
+    def Serial_Servo_motor(self,servo_number,servo_name,mcu_number,gpio):
+             if mcu_number == "STM32F103C8TX":
+                      exec("global Servo_motor_"+str(servo_number)+";Servo_motor_"+str(servo_number)+" = servo_name.get_pin('d:"+str(gpio)+":s')") # Getting the servo gpio setup 
+    def Serial_servo_control(self,mcu_number,servo_number,angle): 
+             if mcu_number == "STM32F103C8TX": 
+                      exec("Servo_motor_"+str(servo_number)+".write("+str(angle)+")") #Getting angle in degree 
 
-        pass
     # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
     # I2C GPIO
     def I2C_DC_motordriver(self, i2c_address, gpiol, gpior):
 
-        pass
+              pass
 
     def I2C_servo_motor(self, name_servo, angle, pins):
 
@@ -1386,7 +1401,15 @@ def Create_i2c_Servo(servo_num, servo_name, angle, pin):
              str(servo_name)+"',"+str(angle)+","+str(pin)+")")
     except:
         print("Checking your variables and pins data input")
-
+def Create_serial_Servo(servo_number,servo_name,mcu_number,gpio):
+    
+             Servo_motor = Action_control()
+             Servo_motor.Serial_Servo_motor(servo_number,servo_name,mcu_number,gpio)        
+     
+def Create_Servo_motor(mcu_number,servo_number,angle): 
+           servo_motor_write = Action_control() 
+           servo_motor_write.Serial_servo_control(mcu_number,servo_number,angle)
+           
 
 def microcontroller_info_dat(mcu_code_name):
     exec("mcu_"+str(mcu_code_name)+" = Microcontroller_pins()")
