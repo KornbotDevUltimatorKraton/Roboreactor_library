@@ -92,7 +92,7 @@ try:
      pca = PCA9685(i2c_bus)
      pca.frequency = 50
 except:
-     print("No i2c servo devices connect with the computer")
+     print("No servo devices connect with the computer")
 mem_sub_variable = []  # mem subscriber return variable
 # Collected the used pins on the list to avoid clash on the system hardware control
 mem_used_pins = {}
