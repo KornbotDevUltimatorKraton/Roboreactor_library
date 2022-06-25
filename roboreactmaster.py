@@ -1491,7 +1491,10 @@ def Multiple_node_logic(): # Getting the non statement if not found any lib
     pass 
 def OCR_code_detect():
      pass 
-
+def Multi_node_logic():
+    pass 
+def NLP_language():
+    pass    
 
 def mcu1():
     mcu_data = "STM32F103CBTx"
