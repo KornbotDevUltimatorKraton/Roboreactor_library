@@ -92,7 +92,7 @@ try:
      pca = PCA9685(i2c_bus)
      pca.frequency = 50
 except:
-     print("No servo devices connect with the computer")
+     print("No i2c servo devices connect with the computer")
 mem_sub_variable = []  # mem subscriber return variable
 # Collected the used pins on the list to avoid clash on the system hardware control
 mem_used_pins = {}
@@ -416,15 +416,16 @@ class Action_control(object):
                  str(number)+".write(0)"+"\n\t"+"motorr_"+str(number)+".write(0)")
 
     # Getting the stepper motor board name to classify the board
-    def Serial_stepper_driver(self, stepper_num, serialdev, g_code):
+    def Serial_stepper_driver(self, stepper_num, serialdev,serial_com, g_code):
 
         # or p.printcore('COM3',115200) on Windows
-        exec("motion_"+str(stepper_num)+" = printcore(serialdev, 115200")
+        exec("global motion_"+str(stepper_num)+";motion_"+str(stepper_num)+" = printcore(serialdev, "+str(serial_com)+")")
         exec("while not motion_"+str(stepper_num)+".online:\n\ttime.sleep(0.1)")
         # this will send M105 immediately, ahead of the rest of the print
         exec("motion_"+str(stepper_num)+".send_now('M302 P0')")
         exec("motion_"+str(stepper_num)+".send_now('M302 S0')")
-        exec("motion_"+str(stepper_num)+".send_now(g_code)")
+        exec("motion_"+str(stepper_num)+".send_now('"+str(g_code)+"')")
+        exec("motion_"+str(stepper_num)+'.send_now("G1 X100")')
         exec("motion_"+str(stepper_num)+".pause()")
         exec("motion_"+str(stepper_num)+".resume()")
         exec("motion_"+str(stepper_num)+".disconnect()")
@@ -559,7 +560,7 @@ class Visual_Cam_optic(object):
              str(cam_num)+","+"buffer_"+str(cam_num)+" = cv2.imencode('.jpg',frame_"+str(cam_num)+",[cv2.IMWRITE_JPEG_QUALITY,80])\n\t\t\tmessage_"+str(cam_num)+" = base64.b64encode(buffer_"+str(cam_num)+")"+"\n\t\t\tserver_socket_"+str(cam_num)+".sendto(message_"+str(cam_num)+",client_addr_"+str(cam_num)+")"+"\n\t\t\tframe_"+str(cam_num)+" = cv2.putText(frame_"+str(cam_num)+",'FPS: '+str(fps_"+str(cam_num)+"),(10,40),cv2.FONT_HERSHEY_SIMPLEX,0.7,(0,0,255),2)")  # Getting the frame from the video input
 
     # Getting the host ip data
-    def Camera_subscriber(self, cam_num, Buffers, portdata, ip_host):
+    def Camera_subscriber(self, cam_num, Buffers, portdata, ip_host,ip_message,port_message):
         # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
         exec("BUFF_SIZE_"+str(cam_num)+" = "+str(Buffers))
         exec("client_socket_"+str(cam_num) +
@@ -579,7 +580,9 @@ class Visual_Cam_optic(object):
         # Start the loop of frame rate read
 
         exec("for r_"+str(cam_num)+" in count(0):"+"\n\t\tpacket_"+str(cam_num)+",_"+str(cam_num)+" = client_socket_"+str(cam_num)+".recvfrom(BUFF_SIZE_"+str(cam_num)+")"+"\n\t\tdata_"+str(cam_num)+" = base64.b64decode(packet_" +
-             str(cam_num)+",' /')"+"\n\t\tnpdata_"+str(cam_num)+" = np.fromstring(data_"+str(cam_num)+",dtype=np.uint8)"+"\n\t\tframe_"+str(cam_num)+" = cv2.imdecode(npdata_"+str(cam_num)+",1)"+"\n\t\tprint(frame_"+str(cam_num)+")")
+             str(cam_num)+",' /')"+"\n\t\tnpdata_"+str(cam_num)+" = np.fromstring(data_"+str(cam_num)+",dtype=np.uint8)"+"\n\t\tglobal frame_"+str(cam_num)+";frame_"+str(cam_num)+" = cv2.imdecode(npdata_"+str(cam_num)+",1)"+'\n\t\tprint("Client_frame",frame_'+str(cam_num)+")") #+"\n\t\tframedat_"+str(cam_num)+" = Internal_Publish_subscriber()"+"\n\t\tframedat_"+str(cam_num)+".Publisher_string('"+str(ip_message)+"',"+"frame_"+str(cam_num)+","+str(port_message)+")")
+             
+        
     # Using to manage the muti perpost camera from the single frame input from the camera to avoid the speed problem
 
     def Multifunctional_camera(self, cam_num, ip_address, port, Width):
@@ -1410,6 +1413,9 @@ def Create_Servo_motor(mcu_number,servo_number,angle):
            servo_motor_write = Action_control() 
            servo_motor_write.Serial_servo_control(mcu_number,servo_number,angle)
            
+def Stepper_serial_gcode(stepper_num, serialdev,serial_com, g_code):
+    stepper_node = Action_control()
+    stepper_node.Serial_stepper_driver(stepper_num,serialdev,serial_com,g_code)
 
 def microcontroller_info_dat(mcu_code_name):
     exec("mcu_"+str(mcu_code_name)+" = Microcontroller_pins()")
@@ -1418,13 +1424,19 @@ def microcontroller_info_dat(mcu_code_name):
     return data_mcu
 
 # Non execution pub node
-
-
+def Create_sub_node_string(ip, buffer_size, port):
+         node_sub_string = Internal_Publish_subscriber() 
+         node_sub_string.Subscriber_string(ip, buffer_size, port)
 def Camera_pub_node(cam_num, buffers, port, ip_number):  # running all theses in exec
 
     exec("cam_"+str(cam_num)+" = Visual_Cam_optic()")
     exec("cam_"+str(cam_num)+".Camera_raw("+str(cam_num)+"," +
          str(buffers)+","+str(port)+",'"+str(ip_number)+"')")
+
+def Camera_sub_node(cam_num, Buffers, portdata, ip_host,ip_message,port_message):
+    exec("cam_"+str(cam_num)+" = Visual_Cam_optic()") 
+    exec("cam_"+str(cam_num)+".Camera_subscriber("+str(cam_num)+"," +
+         str(Buffers)+","+str(portdata)+",'"+str(ip_host)+"','"+str(ip_message)+"',"+str(port_message)+")")
 
 # Non execution sub node
 
@@ -1480,21 +1492,7 @@ def GPRS_communication_system(sim800l, command_input, ip, port):
 def Location_cellular_network(sim800l, ip, port):
     GPRS_loc = Cellular_networking_com()
     GPRS_loc.Location_cellular_network(sim800l, ip, port)
-       
-def Lidar_publisher():
-     pass 
-def Skeletal_detect_cam():
-    pass 
-def Body_detect_cam():
-    pass     
-def Multiple_node_logic(): # Getting the non statement if not found any lib 
-    pass 
-def OCR_code_detect():
-     pass 
-def Multi_node_logic():
-    pass 
-def NLP_language():
-    pass    
+
 
 def mcu1():
     mcu_data = "STM32F103CBTx"
