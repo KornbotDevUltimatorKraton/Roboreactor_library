@@ -1494,6 +1494,20 @@ def Location_cellular_network(sim800l, ip, port):
     GPRS_loc = Cellular_networking_com()
     GPRS_loc.Location_cellular_network(sim800l, ip, port)
 
+def Lidar_publisher():
+     pass 
+def Skeletal_detect_cam():
+    pass 
+def Body_detect_cam():
+    pass     
+def Multiple_node_logic(): # Getting the non statement if not found any lib 
+    pass 
+def OCR_code_detect():
+     pass 
+def Multi_node_logic():
+     pass
+def NLP_lnauge():
+     pass   
 
 def mcu1():
     mcu_data = "STM32F103CBTx"
