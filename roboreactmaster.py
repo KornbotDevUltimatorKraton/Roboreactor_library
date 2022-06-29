@@ -427,7 +427,6 @@ class Action_control(object):
         exec("motion_"+str(stepper_num)+".send_now('M302 P0')")
         exec("motion_"+str(stepper_num)+".send_now('M302 S0')")
         exec("motion_"+str(stepper_num)+".send_now('"+str(g_code)+"')")
-        exec("motion_"+str(stepper_num)+'.send_now("G1 X100")')
         exec("motion_"+str(stepper_num)+".pause()")
         exec("motion_"+str(stepper_num)+".resume()")
         exec("motion_"+str(stepper_num)+".disconnect()")
