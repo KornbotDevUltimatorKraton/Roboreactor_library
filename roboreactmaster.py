@@ -422,6 +422,8 @@ class Action_control(object):
         exec("global motion_"+str(stepper_num)+";motion_"+str(stepper_num)+" = printcore(serialdev, "+str(serial_com)+")")
         exec("while not motion_"+str(stepper_num)+".online:\n\ttime.sleep(0.1)")
         # this will send M105 immediately, ahead of the rest of the print
+        print("motion_"+str(stepper_num)+".send_now('"+str(g_code)+"')")
+        exec("motion_"+str(stepper_num)+".send_now('G0 X0 Y0')")
         exec("motion_"+str(stepper_num)+".send_now('M302 P0')")
         exec("motion_"+str(stepper_num)+".send_now('M302 S0')")
         exec("motion_"+str(stepper_num)+".send_now('"+str(g_code)+"')")
