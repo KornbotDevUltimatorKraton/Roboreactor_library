@@ -1506,7 +1506,7 @@ def OCR_code_detect():
      pass 
 def Multi_node_logic():
      pass
-def NLP_lngauge():
+def NLP_language():
      pass   
 
 def mcu1():
